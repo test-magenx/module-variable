@@ -10,7 +10,6 @@ namespace Magento\Variable\Test\Unit\Model\Source;
 use Magento\Config\Model\Config\Structure\SearchInterface;
 use Magento\Config\Model\Config\StructureElementInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Variable\Model\Config\Structure\AvailableVariables;
 use Magento\Variable\Model\Source\Variables;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -32,7 +31,7 @@ class VariablesTest extends TestCase
      *
      * @var array
      */
-    protected $variablesConfigMock;
+    protected $configVariables;
 
     /**
      * @var SearchInterface|MockObject
@@ -46,14 +45,12 @@ class VariablesTest extends TestCase
             ->disableOriginalConstructor()
             ->getMockForAbstractClass();
         $helper = new ObjectManager($this);
-        $configVariables = [
+        $this->configVariables = [
             'web' => [
                 'web/unsecure/base_url' => '1',
                 'web/secure/base_url' => '1'
             ]
         ];
-        $this->variablesConfigMock = $this->createMock(AvailableVariables::class);
-        $this->variablesConfigMock->expects($this->any())->method('getConfigPaths')->willReturn($configVariables);
 
         $element1 = $this->getMockBuilder(StructureElementInterface::class)
             ->disableOriginalConstructor()
@@ -61,9 +58,9 @@ class VariablesTest extends TestCase
             ->getMockForAbstractClass();
         $element2 = clone $element1;
         $groupElement = clone $element1;
-        $element1->expects($this->any())->method('getLabel')->willReturn(__('Base URL'));
-        $element2->expects($this->any())->method('getLabel')->willReturn(__('Secure Base URL'));
-        $groupElement->expects($this->any())->method('getLabel')->willReturn(__('Web'));
+        $element1->expects($this->once())->method('getLabel')->willReturn(__('Base URL'));
+        $element2->expects($this->once())->method('getLabel')->willReturn(__('Secure Base URL'));
+        $groupElement->expects($this->once())->method('getLabel')->willReturn(__('Web'));
 
         $this->configMock->expects($this->any())->method('getElementByConfigPath')->willReturnMap([
             ['web', $groupElement],
@@ -73,14 +70,14 @@ class VariablesTest extends TestCase
 
         $this->model = $helper->getObject(Variables::class, [
             'configStructure' => $this->configMock,
-            'configPaths' => $this->variablesConfigMock
+            'configPaths' => $this->configVariables
         ]);
     }
 
     public function testToOptionArrayWithoutGroup()
     {
         $optionArray = $this->model->toOptionArray();
-        $this->assertCount(count($this->variablesConfigMock->getConfigPaths()['web']), $optionArray);
+        $this->assertCount(count($this->configVariables['web']), $optionArray);
         $expectedResults = $this->getExpectedOptionsResults();
         $index = 0;
         foreach ($optionArray as $variable) {
@@ -95,7 +92,7 @@ class VariablesTest extends TestCase
         $optionArray = $this->model->toOptionArray(true);
         $this->assertEquals('Web', $optionArray[0]['label']);
         $optionArrayValues = $optionArray[0]['value'];
-        $this->assertCount(count($this->variablesConfigMock->getConfigPaths()['web']), $optionArrayValues);
+        $this->assertCount(count($this->configVariables['web']), $optionArrayValues);
         $expectedResults = $this->getExpectedOptionsResults();
         $index = 0;
         foreach ($optionArray[0]['value'] as $variable) {
@@ -103,19 +100,6 @@ class VariablesTest extends TestCase
             $this->assertEquals($expectedResults[$index]['label_text'], $variable['label']->getText());
             $index++;
         }
-    }
-
-    public function testGetAvailableVars()
-    {
-        $vars = [
-            'web/unsecure/base_url' => '1',
-            'web/secure/base_url' => '1'
-        ];
-        $expected = [
-            'web/unsecure/base_url', 'web/secure/base_url'
-        ];
-        $this->variablesConfigMock->expects($this->any())->method('getFlatConfigPaths')->willReturn($vars);
-        $this->assertEquals($expected, $this->model->getAvailableVars());
     }
 
     /**

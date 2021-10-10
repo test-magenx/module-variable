@@ -5,9 +5,6 @@
  */
 namespace Magento\Variable\Model\Source;
 
-use Magento\Config\Model\Config\Structure\SearchInterface;
-use Magento\Variable\Model\Config\Structure\AvailableVariables;
-
 /**
  * Store Contact Information source model.
  */
@@ -27,24 +24,24 @@ class Variables implements \Magento\Framework\Option\ArrayInterface
     private $configVariables = [];
 
     /**
-     * @var AvailableVariables
+     * @var array
      */
     private $configPaths = [];
 
     /**
-     * @var SearchInterface
+     * @var \Magento\Config\Model\Config\Structure\SearchInterface
      */
     private $configStructure;
 
     /**
      * Constructor.
      *
-     * @param SearchInterface $configStructure
+     * @param \Magento\Config\Model\Config\Structure\SearchInterface $configStructure
      * @param array $configPaths
      */
     public function __construct(
-        SearchInterface $configStructure,
-        AvailableVariables $configPaths
+        \Magento\Config\Model\Config\Structure\SearchInterface $configStructure,
+        array $configPaths = []
     ) {
         $this->configStructure = $configStructure;
         $this->configPaths = $configPaths;
@@ -99,16 +96,6 @@ class Variables implements \Magento\Framework\Option\ArrayInterface
     }
 
     /**
-     * Return flat list of available config variables.
-     *
-     * @return array
-     */
-    public function getAvailableVars()
-    {
-        return array_keys($this->configPaths->getFlatConfigPaths());
-    }
-
-    /**
      * Get flattened config variables.
      *
      * @return array
@@ -133,7 +120,7 @@ class Variables implements \Magento\Framework\Option\ArrayInterface
     private function getConfigVariables()
     {
         if (empty($this->configVariables)) {
-            foreach ($this->configPaths->getConfigPaths() as $groupPath => $groupElements) {
+            foreach ($this->configPaths as $groupPath => $groupElements) {
                 $groupPathElements = explode('/', $groupPath);
                 $path = [];
                 $labels = [];
